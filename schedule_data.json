@@ -1,0 +1,55 @@
+{
+  "day1": [
+    {
+      "start_time": "09:30",
+      "end_time": "11:15",
+      "category": "🚌 移動",
+      "place": "羽田空港 ➔ 新千歳",
+      "memo": "",
+      "cost": 46100,
+      "payer": "水上",
+      "involved_members": [
+        "水上",
+        "横井"
+      ],
+      "start_place": "羽田空港",
+      "end_place": "新千歳"
+    },
+    {
+      "start_time": "16:00",
+      "end_time": "19:00",
+      "category": "🎿 観光",
+      "title": "トゲナシトゲアリライブ！",
+      "place": "Zepp札幌",
+      "memo": "開場：16:00\n開始：17:00"
+    },
+    {
+      "start_time": "15:00",
+      "end_time": "16:00",
+      "category": "🏨 宿泊",
+      "title": "チェックイン",
+      "place": "何とかホテル",
+      "memo": ""
+    }
+  ],
+  "day2": [
+    {
+      "start_time": "20:30",
+      "end_time": "22:15",
+      "category": "🚌 移動",
+      "title": "新千歳 ➔ 羽田",
+      "place": "",
+      "memo": "",
+      "start_place": "新千歳",
+      "end_place": "羽田"
+    },
+    {
+      "start_time": "12:00",
+      "end_time": "13:00",
+      "category": "🍜 食事",
+      "title": "昼食",
+      "place": "",
+      "memo": ""
+    }
+  ]
+}

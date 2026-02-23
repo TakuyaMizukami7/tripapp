@@ -1,0 +1,93 @@
+[
+  {
+    "id": "mission",
+    "title": "🎯 旅のミッション・ビンゴ",
+    "description": "旅行中に2人で達成したい小さな目標（ミッション）をクリアしてビンゴを目指そう！",
+    "bingo_count": 0,
+    "missions": [
+      {
+        "text": "地元の美女と飲む",
+        "done": false
+      },
+      {
+        "text": "最高の景色で自撮り",
+        "done": false
+      },
+      {
+        "text": "地元のコンビニ（セコマ）に行く",
+        "done": false
+      },
+      {
+        "text": "大喜利で10いいね獲得",
+        "done": false
+      },
+      {
+        "text": "予定にない店にふらっと入る",
+        "done": false
+      },
+      {
+        "text": "お土産を1つ以上買う",
+        "done": false
+      },
+      {
+        "text": "乾杯の写真を撮る",
+        "done": false
+      },
+      {
+        "text": "1万歩以上歩く",
+        "done": false
+      },
+      {
+        "text": "ライブで叫ぶ",
+        "done": false
+      }
+    ]
+  },
+  {
+    "id": "food",
+    "title": "🦀 北海道食べたいものビンゴ",
+    "description": "北海道の絶品グルメを制覇してビンゴを達成しよう！",
+    "bingo_count": 0,
+    "missions": [
+      {
+        "text": "新鮮な海鮮丼",
+        "done": false
+      },
+      {
+        "text": "本場の味噌ラーメン",
+        "done": false
+      },
+      {
+        "text": "牧場ソフトクリーム",
+        "done": false
+      },
+      {
+        "text": "絶品スープカレー",
+        "done": false
+      },
+      {
+        "text": "定番ジンギスカン",
+        "done": false
+      },
+      {
+        "text": "贅沢にカニを食べる",
+        "done": false
+      },
+      {
+        "text": "ご当地バーガー",
+        "done": false
+      },
+      {
+        "text": "ルタオや六花亭",
+        "done": false
+      },
+      {
+        "text": "サッポロクラシック",
+        "done": false
+      }
+    ],
+    "memos": [
+      "ジンギスカン：成吉思汗だるま"
+    ]
+  }
+]
