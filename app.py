@@ -14,8 +14,8 @@ BINGO_FILE = "bingo_data.json"
 
 # ── 日程と基本情報の設定 ──────────────────────────────────────────────────────
 DAYS = {
-    "day1": {"label": "2/28（金）Day 1", "date": "2026-02-28"},
-    "day2": {"label": "3/1（土）Day 2", "date": "2026-03-01"},
+    "day1": {"label": "2/28（土）Day 1", "date": "2026-02-28"},
+    "day2": {"label": "3/1（日）Day 2", "date": "2026-03-01"},
 }
 
 CATEGORIES = {
@@ -150,7 +150,7 @@ if os.path.exists(header_img_path):
     )
 
 st.title("🦌 北海道旅のしおり")
-st.caption("2026年 2/28（金）〜 3/1（土）  1泊2日の旅行スケジューラー")
+st.caption("2026年 2/28（土）〜 3/1（日）  1泊2日の旅行スケジューラー")
 st.divider()
 
 # ── ヘルパー関数群 ─────────────────────────────────────────────────────────────
@@ -342,6 +342,26 @@ def render_day_content(day_key: str, day_info: dict):
             st.info("まだ予定がありません。追加してください。")
         else:
             for i, item in enumerate(items):
+                # アンカーの追加
+                st.markdown(f'<div id="event_{day_key}_{i}"></div>', unsafe_allow_html=True)
+                
+                # スクロール用のスクリプト
+                if st.session_state.get(f"scroll_to_{day_key}") == str(i):
+                    import streamlit.components.v1 as components
+                    components.html(
+                        f"""
+                        <script>
+                        const el = window.parent.document.getElementById('event_{day_key}_{i}');
+                        if (el) {{
+                            el.scrollIntoView({{behavior: 'smooth', block: 'center'}});
+                        }}
+                        </script>
+                        """,
+                        height=0,
+                        width=0
+                    )
+                    st.session_state[f"scroll_to_{day_key}"] = None
+
                 # 表示タイトルのクリーンアップ
                 # 移行時の互換性対応
                 item_title = item.get("title")
@@ -441,6 +461,7 @@ def render_day_content(day_key: str, day_info: dict):
                 clicked_id = str(cal_result["eventClick"]["event"]["id"])
                 if st.session_state.get(f"active_exp_{day_key}") != clicked_id:
                     st.session_state[f"active_exp_{day_key}"] = clicked_id
+                    st.session_state[f"scroll_to_{day_key}"] = clicked_id
                     st.rerun()
         else:
             st.info("予定を追加するとここにカレンダーが表示されます。")
@@ -499,13 +520,42 @@ def render_expenses_tab():
                 
             st.divider()
             st.write("**🔽 最終的な精算アクション 🔽**")
+            
+            receivers = []
+            payers = []
             for member, diff in diffs.items():
                 if diff > 0:
-                    st.success(f"{member} は立て替えています。（他の人から {int(diff):,}円 **もらう**）")
+                    receivers.append([member, diff])
                 elif diff < 0:
-                    st.error(f"{member} は他の人に {int(abs(diff)):,}円 **払う**必要があります。")
-                else:
-                    st.info(f"{member} は精算不要です。")
+                    payers.append([member, abs(diff)])
+                    
+            receivers.sort(key=lambda x: x[1], reverse=True)
+            payers.sort(key=lambda x: x[1], reverse=True)
+            
+            transactions = []
+            i, j = 0, 0
+            while i < len(payers) and j < len(receivers):
+                payer, p_amount = payers[i]
+                receiver, r_amount = receivers[j]
+                
+                if p_amount == 0:
+                    i += 1
+                    continue
+                if r_amount == 0:
+                    j += 1
+                    continue
+                    
+                transfer = min(p_amount, r_amount)
+                transactions.append((payer, receiver, transfer))
+                
+                payers[i][1] -= transfer
+                receivers[j][1] -= transfer
+                
+            if transactions:
+                for payer, receiver, amount in transactions:
+                    st.error(f"💸 **{payer}** ➔ **{receiver}** に **¥ {int(amount):,}** 支払う")
+            else:
+                st.success("🎉 精算はすべて完了しています（追加の支払いはありません）。")
 
 
 # ── UI: 旅のミッション・ビンゴタブ ──────────────────────────────────────────
@@ -663,27 +713,40 @@ def render_ai_assistant_tab():
                         title = item.get("title") or (f"{item.get('start_place','')}➔{item.get('end_place','')}" if item.get("category")=="🚌 移動" else item.get("place", ""))
                         context += f"{item['start_time']}~{item['end_time']} [{item['category']}] {title}\n"
                 
-                context += "\n【ビンゴ（やりたいこと・食べたいもの）】\n"
+                context += "\n【ビンゴ（やりたいこと・食べたいもの）とメモ】\n"
                 for bingo in st.session_state.bingos:
                     context += f"--- {bingo['title']} ---\n"
                     for m in bingo["missions"]:
                         status = "達成済" if m["done"] else "未達成"
                         context += f"- {m['text']} ({status})\n"
+                    if bingo.get("memos"):
+                        context += "（メモ）\n"
+                        for memo in bingo["memos"]:
+                            context += f"- {memo}\n"
 
                 prompt = f"""あなたは優秀でフレンドリーな旅行コンシェルジュです。
-北海道旅行（1泊2日）のスケジュールと、旅行者の「やりたいこと・食べたいもの（ビンゴ）」のデータが以下にあります。
+北海道旅行（1泊2日）の「現在のスケジュール」と、「やりたいこと・食べたいもの（ビンゴやメモ）」のデータが以下にあります。"""
+
+                if user_query:
+                    prompt += f"""
+旅行者からリクエスト（質問）が来ています。
+【リクエスト】: 「{user_query}」
+
+この【リクエスト】に対する回答を最も重点的かつ最優先に行ってください。
+回答の際は、提供されたスケジュール、未達成のビンゴ、およびメモの内容を最大限に活用し、旅行者の状況に合わせた具体的でワクワクする提案にしてください。
+"""
+                else:
+                    prompt += """
 これらを踏まえて、以下の点について簡潔でワクワクするアドバイスを提供してください。
 - 現在の予定の良さやポジティブなフィードバック
-- スケジュールの空き時間にできそうな「未達成のビンゴ」の提案
-- スケジュール上の注意点（移動時間や北海道ならではの配慮など）やワンポイントアドバイス
+- スケジュールの空き時間にできそうな「未達成のビンゴ」や「メモに書かれた内容」からの提案
+- スケジュール上の注意点（移動時間や現地の配慮など）やワンポイントアドバイス
 """
-                if user_query:
-                    prompt += f"\nさらに、旅行者から以下の質問・リクエストが来ています。これまでの文脈を考慮しつつ、この質問に最優先で答えてください：\n「{user_query}」\n"
 
                 prompt += f"\n{context}\n"
 
                 response = client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model="gpt-5-mini",
                     messages=[
                         {"role": "system", "content": "あなたはフレンドリーな旅行アシスタントです。"},
                         {"role": "user", "content": prompt}
