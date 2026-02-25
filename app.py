@@ -739,23 +739,27 @@ def render_ai_assistant_tab():
                     prompt += """
 これらを踏まえて、以下の点について簡潔でワクワクするアドバイスを提供してください。
 - 現在の予定の良さやポジティブなフィードバック
-- スケジュールの空き時間にできそうな「未達成のビンゴ」や「メモに書かれた内容」からの提案
 - スケジュール上の注意点（移動時間や現地の配慮など）やワンポイントアドバイス
 """
 
+                prompt += "\n※出力は長くなり過ぎないよう、最大でも500文字程度にまとめて簡潔に回答してください。\n"
                 prompt += f"\n{context}\n"
 
                 response = client.chat.completions.create(
                     model="gpt-5-mini",
                     messages=[
-                        {"role": "system", "content": "あなたはフレンドリーな旅行アシスタントです。"},
-                        {"role": "user", "content": prompt}
+                        {"role": "user", "content": f"あなたはフレンドリーな旅行アシスタントです。\n\n{prompt}"}
                     ],
-                    max_completion_tokens=2000
+                    max_completion_tokens=4000
                 )
                 
                 st.write("### 🤖 アドバイス")
-                st.write(response.choices[0].message.content)
+                content = response.choices[0].message.content
+                if content:
+                    st.write(content)
+                else:
+                    st.warning("⚠️ AIからの回答テキストが空でした。APIの生レスポンスを出力します：")
+                    st.json(response.model_dump() if hasattr(response, 'model_dump') else str(response))
             
             except Exception as e:
                 st.error(f"API呼び出しに失敗しました: {e}")
