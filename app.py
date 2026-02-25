@@ -752,7 +752,7 @@ def render_ai_assistant_tab():
                         {"role": "user", "content": prompt}
                     ],
                     temperature=0.7,
-                    max_tokens=2000
+                    max_completion_tokens=2000
                 )
                 
                 st.write("### 🤖 アドバイス")
@@ -761,8 +761,60 @@ def render_ai_assistant_tab():
             except Exception as e:
                 st.error(f"API呼び出しに失敗しました: {e}")
 
+# ── UI: データ管理 (バックアップと復元) タブ ──────────────────────────────────────────
+import io
+import zipfile
+
+def render_admin_tab():
+    st.header("⚙️ データ管理 (バックアップと復元)")
+    st.warning("⚠️ Streamlit Cloudの仕様上、GitHubにコードをプッシュする（アプリが更新される）と、クラウド上の最新のデータは消去されてしまいます。必ず更新前にデータをバックアップしてください。")
+    
+    col_dl, col_ul = st.columns(2, gap="large")
+    
+    with col_dl:
+        st.subheader("📥 データのバックアップ (ダウンロード)")
+        st.write("現在のすべてのデータ（予定、メンバー、出費、ビンゴ）をZIP形式でダウンロードします。")
+        
+        # メモリ上にZIPファイルを作成
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+            for file_name in [DATA_FILE, USERS_FILE, EXPENSES_FILE, BINGO_FILE]:
+                if os.path.exists(file_name):
+                    zip_file.write(file_name)
+                    
+        st.download_button(
+            label="📦 すべてのデータをダウンロード (.zip)",
+            data=zip_buffer.getvalue(),
+            file_name=f"trip_data_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
+            mime="application/zip",
+            type="primary"
+        )
+        
+    with col_ul:
+        st.subheader("📤 データの復元 (アップロード)")
+        st.write("バックアップしたZIPファイルをアップロードして、データを上書き復元します。")
+        uploaded_file = st.file_uploader("バックアップZIPファイルを選択", type="zip")
+        
+        if uploaded_file is not None:
+            if st.button("🚨 データを復元する（現在のデータは上書きされます）", type="primary"):
+                try:
+                    with zipfile.ZipFile(uploaded_file, "r") as zip_ref:
+                        zip_ref.extractall(".")
+                    
+                    # セッションステートをクリアしてリロードさせる
+                    for key in ["data", "users", "expenses", "bingos"]:
+                        if key in st.session_state:
+                            del st.session_state[key]
+                            
+                    st.success("データの復元が完了しました！アプリを再読み込みします...")
+                    import time
+                    time.sleep(1)
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"復元中にエラーが発生しました: {e}")
+
 # ── タブごとのレンダリング ────────────────────────────────────────────────────
-tab_labels = [info["label"] for key, info in DAYS.items()] + ["💰 割り勘・出費リスト", "🎯 旅のビンゴ", "🤖 AIアシスタント"]
+tab_labels = [info["label"] for key, info in DAYS.items()] + ["💰 割り勘・出費リスト", "🎯 旅のビンゴ", "🤖 AIアシスタント", "⚙️ 管理/バックアップ"]
 selected_tab = st.radio("表示切り替え", tab_labels, horizontal=True, label_visibility="collapsed")
 
 # 1日目、2日目タブ
@@ -781,3 +833,8 @@ if selected_tab == "🎯 旅のビンゴ":
 # AIアシスタントタブ
 if selected_tab == "🤖 AIアシスタント":
     render_ai_assistant_tab()
+
+# データ管理タブ
+if selected_tab == "⚙️ 管理/バックアップ":
+    render_admin_tab()
+
