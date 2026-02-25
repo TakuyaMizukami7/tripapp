@@ -751,7 +751,6 @@ def render_ai_assistant_tab():
                         {"role": "system", "content": "あなたはフレンドリーな旅行アシスタントです。"},
                         {"role": "user", "content": prompt}
                     ],
-                    temperature=0.7,
                     max_completion_tokens=2000
                 )
                 
